@@ -1,17 +1,19 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';
-
+import "dart:math";
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:max_count/src/models/hex_color.dart';
+import 'package:max_count/src/screens/screens.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
-
 import 'package:just_audio/just_audio.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -19,7 +21,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  int _initialNumber = -1;
+  String _initialNumber = "";
   int _numLives = 3;
   int _liveUsers = -1;
   final _database = FirebaseDatabase.instance;
@@ -27,9 +29,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   late StreamSubscription _liveStream;
   late StreamSubscription _liveUsersStream;
 
-  final _inputController = TextEditingController();
+  late Timer t;
+  bool isCoolingDown = false;
 
+  final _inputController = TextEditingController();
   late AudioPlayer player;
+
+  bool wantsAudio = true;
 
   @override
   void initState() {
@@ -37,6 +43,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     WidgetsBinding.instance!.addObserver(this);
     player = AudioPlayer();
+
     _activateListeners();
   }
 
@@ -82,7 +89,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (newNumber == 0) {
           _playReset();
         }
-        _initialNumber = newNumber as int;
+        _initialNumber = newNumber as String;
       });
     });
     _liveStream = _database.ref("maxCount/lives").onValue.listen((event) {
@@ -107,8 +114,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             _liveUsers = int.parse(vides.toString());
           });
         });
-      }).catchError((error) =>
-              _displayToastError("Error", "We encountered a network error"));
+      }).catchError((error) {
+        _displayToastError("Error", "We encountered a network error");
+        _liveUsersStream =
+            _database.ref("maxCount/liveUsers").onValue.listen((event) {
+          Object? vides = event.snapshot.value;
+          vides ??= 0;
+          setState(() {
+            _liveUsers = int.parse(vides.toString());
+          });
+        });
+      });
     });
   }
 
@@ -124,6 +140,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+
+    if (Provider.of<InternetConnectionStatus>(context) ==
+        InternetConnectionStatus.disconnected) {
+      return NoInternet();
+    }
 
     return GestureDetector(
         onTap: () {
@@ -166,7 +187,21 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                 textStyle: TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.bold)),
                             maxLines: 1,
-                          )
+                          ),
+                          Expanded(child: Container()),
+                          IconButton(
+                            icon: wantsAudio
+                                ? Icon(Icons.volume_up)
+                                : Icon(Icons.volume_off_outlined),
+                            onPressed: () {
+                              setState(() {
+                                wantsAudio = !wantsAudio;
+                              });
+                            },
+                          ),
+                          SizedBox(
+                            width: width * 0.05,
+                          ),
                         ],
                       ),
                       SizedBox(
@@ -191,7 +226,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         height: height * 0.05,
                       ),
                       Container(
-                        width: width * 0.4,
+                        width: width * 0.6,
                         height: width * 0.3,
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
@@ -205,13 +240,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                     Offset(0, 0), // changes position of shadow
                               ),
                             ]),
-                        child: Center(
-                          child: AutoSizeText(
-                            "$_initialNumber",
-                            style: GoogleFonts.vt323(
-                                textStyle: TextStyle(
-                                    fontSize: 60, fontWeight: FontWeight.bold)),
-                            maxLines: 1,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 5, right: 5),
+                          child: Center(
+                            child: AutoSizeText(
+                              _initialNumber,
+                              style: GoogleFonts.vt323(
+                                  textStyle: TextStyle(
+                                      fontSize: 60,
+                                      fontWeight: FontWeight.bold)),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                       ),
@@ -259,7 +298,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           ),
                           ElevatedButton(
                               onPressed: () {
-                                _submitAction();
+                                _submitAction(context);
                               },
                               style: ElevatedButton.styleFrom(
                                   primary: HexColor.fromHex("#fe0100"),
@@ -281,70 +320,124 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         ));
   }
 
-  void _submitAction() {
-    if (_inputController.text.isEmpty) {
-      _displayToastError("Input Empty", "Please add a number before submiting");
-      _playError();
-    } else {
-      int current = _initialNumber;
-      int input = int.parse(_inputController.text);
-      if (current > input + 10 || current < input - 10) {
+  void _submitAction(contexte) async {
+    if (Provider.of<InternetConnectionStatus>(contexte, listen: false) ==
+        InternetConnectionStatus.connected) {
+      if (_inputController.text.isEmpty) {
         _displayToastError(
-            "Not Valid", "Come on... that's obviously not the next number");
+            "Input Empty", "Please add a number before submiting");
         _playError();
       } else {
-        current = _initialNumber;
-        if (current != input - 1) {
-          if (_numLives == 1) {
-            _playReset();
-            _database.ref("maxCount/").update({"lives": 3}).then((value) {
-              _database
-                  .ref("maxCount/")
-                  .update({"number": 0})
-                  .then((value) {})
-                  .catchError((error) => _displayToastError(
-                      "Error", "We encountered a network error"));
+        double current = double.parse(_initialNumber);
+        double input = double.parse(_inputController.text);
+        if (current > input + 10 || current < input - 10) {
+          _displayToastError(
+              "Not Valid", "Come on... that's obviously not the next number");
+          _playError();
+        } else {
+          current = double.parse(_initialNumber);
+          if (current != input - 1) {
+            if (isCoolingDown) {
+              var list = [
+                "You may want to rethink that....",
+                "Wait 5 seconds between obvious mistakes...",
+                "Don't insist...",
+                "Are you trying to fuck up the score?",
+                "C'mon... rethink that again!"
+              ];
+              final _random = Random();
+              var element = list[_random.nextInt(list.length)];
+              MotionToast(
+                icon: Icons.priority_high,
+                title: Text(
+                  "Error",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                description: Text(element),
+                position: MOTION_TOAST_POSITION.top,
+                primaryColor: Colors.red,
+                enableAnimation: false,
+                animationDuration: Duration(milliseconds: 300),
+                toastDuration: Duration(seconds: 1),
+                animationCurve: Curves.fastOutSlowIn,
+                secondaryColor: HexColor.fromHex("#fe0100"),
+                animationType: ANIMATION.fromTop,
+              ).show(context);
+              _playError();
+              t.cancel;
+            } else {
+              _activateCooldown();
+              if (_numLives == 1) {
+                _playReset();
+                _database.ref("maxCount/").update({"lives": 3}).then((value) {
+                  _database
+                      .ref("maxCount/")
+                      .update({"number": "0"})
+                      .then((value) {})
+                      .catchError((error) => _displayToastError(
+                          "Error", "We encountered a network error"));
+                }).catchError((error) => _displayToastError(
+                    "Error", "We encountered a network error"));
+              } else {
+                _playErrorNumber();
+                _numLives--;
+                _database
+                    .ref("maxCount/")
+                    .update({"lives": _numLives})
+                    .then((value) {})
+                    .catchError((error) => _displayToastError(
+                        "Error", "We encountered a network error"));
+              }
+            }
+          } else {
+            _database.ref("maxCount/").update(
+                {"number": input.toStringAsFixed(0)}).then((value) {
+              _playSuccess();
             }).catchError((error) =>
                 _displayToastError("Error", "We encountered a network error"));
-          } else {
-            _playErrorNumber();
-            _numLives--;
-            _database
-                .ref("maxCount/")
-                .update({"lives": _numLives})
-                .then((value) {})
-                .catchError((error) => _displayToastError(
-                    "Error", "We encountered a network error"));
           }
-        } else {
-          _database.ref("maxCount/").update({"number": input}).then((value) {
-            _playSuccess();
-          }).catchError((error) =>
-              _displayToastError("Error", "We encountered a network error"));
         }
+        _inputController.clear();
       }
-      _inputController.clear();
+    } else {
+      _displayToastError("No Connection", "Please connect to the internet");
+      _playError();
     }
   }
 
   void _playSuccess() async {
-    await player.setAsset('assets/sounds/correctAnswer.wav');
-    player.play();
+    if (wantsAudio) {
+      await player.setAsset('assets/sounds/correctAnswer.wav');
+      player.play();
+    }
   }
 
   void _playErrorNumber() async {
-    await player.setAsset('assets/sounds/mistake.wav');
-    player.play();
+    if (wantsAudio) {
+      await player.setAsset('assets/sounds/mistake.wav');
+      player.play();
+    }
   }
 
   void _playError() async {
-    await player.setAsset('assets/sounds/quickBip.wav');
-    player.play();
+    if (wantsAudio) {
+      await player.setAsset('assets/sounds/quickBip.wav');
+      player.play();
+    }
   }
 
   void _playReset() async {
-    await player.setAsset('assets/sounds/reset.wav');
-    player.play();
+    if (wantsAudio) {
+      await player.setAsset('assets/sounds/reset.wav');
+      player.play();
+    }
+  }
+
+  void _activateCooldown() {
+    isCoolingDown = true;
+    t = Timer(Duration(seconds: 5), () {
+      isCoolingDown = false;
+    });
   }
 
   void _displayToastError(String title, String description) {

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:max_count/src/routes/routes.dart';
 
 //PAQUETS INSTALATS
-import 'package:firebase_core/firebase_core.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   runApp(MaxCount());
@@ -19,10 +20,13 @@ class MaxCount extends StatefulWidget {
 class _MaxCountState extends State<MaxCount> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Max Count',
-        initialRoute: '/',
-        routes: getApplicationRoutes());
+    return StreamProvider<InternetConnectionStatus>(
+        initialData: InternetConnectionStatus.connected,
+        create: (_) => InternetConnectionChecker().onStatusChange,
+        child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Max Count',
+            initialRoute: '/',
+            routes: getApplicationRoutes()));
   }
 }
