@@ -1,2 +1,3 @@
-# MaxCount
-Flutter Game
+# max_count
+
+A flutter game
