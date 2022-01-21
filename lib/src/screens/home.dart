@@ -8,12 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:max_count/src/models/hex_color.dart';
+import 'package:max_count/src/models/preferences.dart';
 import 'package:max_count/src/screens/screens.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -33,7 +35,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   bool isCoolingDown = false;
 
   final _inputController = TextEditingController();
-  late AudioPlayer player;
+  final AudioPlayer player = AudioPlayer();
 
   bool wantsAudio = true;
 
@@ -42,7 +44,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
 
     WidgetsBinding.instance!.addObserver(this);
-    player = AudioPlayer();
 
     _activateListeners();
   }
@@ -67,6 +68,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             .catchError((error) =>
                 _displayToastError("Error", "We encountered a network error"));
       });
+
+      /*SharedPreferences.getInstance().then((value) {
+        widget.prefe.wantsAudio = wantsAudio;
+        String js = widget.prefe.toJson().toString();
+        value.setString('prefs', js);
+      });*/
     } else if (state == AppLifecycleState.resumed) {
       _database.ref("maxCount/liveUsers").once().then((event) {
         _liveUsers = int.parse(event.snapshot.value.toString());
@@ -138,6 +145,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    //wantsAudio = widget.prefe.wantsAudio;
+
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
 
