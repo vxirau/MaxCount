@@ -44,6 +44,8 @@ dependencies:
   audio_session: ^0.1.6+1
   audio_service: ^0.18.1
   just_audio_platform_interface: ^4.0.0
+  google_mobile_ads: ^1.0.1
+  nice_intro: ^0.1.4
 
 dev_dependencies:
   flutter_test:

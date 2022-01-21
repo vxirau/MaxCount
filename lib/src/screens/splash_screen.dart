@@ -1,11 +1,11 @@
 //FLUTTER NATIVE
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:max_count/src/models/hex_color.dart';
-import 'package:max_count/src/models/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 //SCREENS
-import 'package:max_count/src/screens/home.dart';
+import 'package:max_count/src/screens/screens.dart';
 
 //PAQUETS INSTALATS
 import 'package:firebase_core/firebase_core.dart';
@@ -13,26 +13,53 @@ import 'package:firebase_core/firebase_core.dart';
 // ignore: must_be_immutable
 class SplashScreen extends StatefulWidget {
   static bool hasLoaded = false;
+  bool wantsSounds = true;
+  bool hasOnboard = false;
 
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  late Preferences p;
+void _onboardingDone(context) {
+  context.widget.hasOnboard = false;
+  SharedPreferences.getInstance().then((value) {
+    value.setBool("hasOnboarding", false);
+  });
+}
 
+class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
-    if (SplashScreen.hasLoaded) return Home();
+    if (SplashScreen.hasLoaded) {
+      if (widget.hasOnboard) {
+        return WelcomeScreen(
+            wantsSound: widget.wantsSounds,
+            callback: () {
+              _onboardingDone(context);
+              setState(() {});
+            });
+      } else {
+        return Home(initialSounds: widget.wantsSounds);
+      }
+    }
 
     return FutureBuilder(
-        future: Firebase.initializeApp(), //,_gestionaAsync(),
+        future: _gestionaAsync(context), //,_gestionaAsync(),
         builder: (c, AsyncSnapshot asyncSnapshot) {
           if (asyncSnapshot.hasError) {
             return Center(child: Text("Error"));
           } else if (asyncSnapshot.hasData) {
             SplashScreen.hasLoaded = true;
-            return Home();
+            if (widget.hasOnboard) {
+              return WelcomeScreen(
+                  wantsSound: widget.wantsSounds,
+                  callback: () {
+                    _onboardingDone(context);
+                    setState(() {});
+                  });
+            } else {
+              return Home(initialSounds: widget.wantsSounds);
+            }
           }
           return Container(
               color: HexColor.fromHex("#5ED466"),
@@ -50,17 +77,31 @@ class _SplashScreenState extends State<SplashScreen> {
         });
   }
 
-  Future<Preferences> _gestionaAsync() async {
+  Future _gestionaAsync(context) async {
     await Firebase.initializeApp();
+    await MobileAds.instance.initialize();
+    List<String> testDeviceIds = ['F7549B55838E8EC844A21FC0ACEBA956'];
+
+    RequestConfiguration configuration =
+        RequestConfiguration(testDeviceIds: testDeviceIds);
+    MobileAds.instance.updateRequestConfiguration(configuration);
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('prefs');
-    if (username == null) {
-      p = Preferences(wantsAudio: true, hasOnboarded: false);
-      String js = p.toJson().toString();
-      prefs.setString('prefs', js);
+
+    if (prefs.containsKey("wantsSounds")) {
+      context.widget.wantsSounds = prefs.getBool("wantsSounds");
     } else {
-      p = preferencesFromJson(prefs.getString('prefs')!);
+      prefs.setBool("wantsSounds", true);
+      context.widget.wantsSounds = true;
     }
-    return p;
+
+    if (prefs.containsKey("hasOnboarding")) {
+      context.widget.hasOnboard = prefs.getBool("hasOnboarding");
+    } else {
+      prefs.setBool("hasOnboarding", true);
+      context.widget.hasOnboard = true;
+    }
+
+    return 1;
   }
 }
