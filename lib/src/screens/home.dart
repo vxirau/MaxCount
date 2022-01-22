@@ -10,7 +10,6 @@ import "dart:math";
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:max_count/src/screens/welcome_screen.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
 import 'package:just_audio/just_audio.dart';

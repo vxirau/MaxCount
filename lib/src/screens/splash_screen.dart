@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:max_count/src/models/hex_color.dart';
+import 'package:max_count/src/screens/onboarding/onboarding1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 //SCREENS
@@ -32,12 +33,10 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     if (SplashScreen.hasLoaded) {
       if (widget.hasOnboard) {
-        return WelcomeScreen(
-            wantsSound: widget.wantsSounds,
-            callback: () {
-              _onboardingDone(context);
-              setState(() {});
-            });
+        return Onboarding1(callback: () {
+          _onboardingDone(context);
+          setState(() {});
+        });
       } else {
         return Home(initialSounds: widget.wantsSounds);
       }
@@ -51,12 +50,10 @@ class _SplashScreenState extends State<SplashScreen> {
           } else if (asyncSnapshot.hasData) {
             SplashScreen.hasLoaded = true;
             if (widget.hasOnboard) {
-              return WelcomeScreen(
-                  wantsSound: widget.wantsSounds,
-                  callback: () {
-                    _onboardingDone(context);
-                    setState(() {});
-                  });
+              return Onboarding1(callback: () {
+                _onboardingDone(context);
+                setState(() {});
+              });
             } else {
               return Home(initialSounds: widget.wantsSounds);
             }
