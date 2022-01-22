@@ -1,6 +1,5 @@
 //FLUTTER NATIVE
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 //ROUTES
 import 'package:max_count/src/routes/routes.dart';
@@ -19,25 +18,6 @@ class MaxCount extends StatefulWidget {
 }
 
 class _MaxCountState extends State<MaxCount> {
-  @override
-  void initState() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    super.initState();
-  }
-
-  @override
-  dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return StreamProvider<InternetConnectionStatus>(
