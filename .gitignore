@@ -9,6 +9,9 @@
 .history
 .svn/
 
+
+ios/.DS_Store
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -30,6 +33,9 @@
 .pub-cache/
 .pub/
 /build/
+
+
+
 
 # Web related
 lib/generated_plugin_registrant.dart
