@@ -84,9 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future _gestionaAsync(context) async {
     await Firebase.initializeApp();
-    await FirebaseAppCheck.instance.activate(
-      webRecaptchaSiteKey: 'recaptcha-v3-site-key',
-    );
+    await FirebaseAppCheck.instance.activate();
 
     await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 

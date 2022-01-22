@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import "dart:math";
+import 'dart:io' show Platform;
 
 //PAQUETS INSTALATS
 import 'package:auto_size_text/auto_size_text.dart';
@@ -155,24 +156,35 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
 
     final AdManagerBannerAdListener _listener = AdManagerBannerAdListener(
-      onAdLoaded: (Ad ad) => print('Ad loaded.'),
+      //onAdLoaded: (Ad ad) => print('Ad loaded.'),
       onAdFailedToLoad: (Ad ad, LoadAdError error) {
         ad.dispose();
-        print('Ad failed to load: $error');
       },
-      onAdOpened: (Ad ad) => print('Ad opened.'),
+      /*onAdOpened: (Ad ad) => print('Ad opened.'),
       onAdClosed: (Ad ad) => print('Ad closed.'),
-      onAdImpression: (Ad ad) => print('Ad impression.'),
+      onAdImpression: (Ad ad) => print('Ad impression.'),*/
     );
 
-    final AdManagerBannerAd myBanner = AdManagerBannerAd(
-      adUnitId: 'ca-app-pub-6805626204344763/8322012453',
-      sizes: [
-        AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
-      ],
-      request: AdManagerAdRequest(),
-      listener: _listener,
-    );
+    final AdManagerBannerAd myBanner;
+    if (Platform.isAndroid) {
+      myBanner = AdManagerBannerAd(
+        adUnitId: 'ca-app-pub-6805626204344763/5143161253',
+        sizes: [
+          AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
+        ],
+        request: AdManagerAdRequest(),
+        listener: _listener,
+      );
+    } else {
+      myBanner = AdManagerBannerAd(
+        adUnitId: 'ca-app-pub-6805626204344763/8322012453',
+        sizes: [
+          AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
+        ],
+        request: AdManagerAdRequest(),
+        listener: _listener,
+      );
+    }
 
     myBanner.load();
 
