@@ -1,34 +1,21 @@
 // ignore_for_file: prefer_const_constructors
 
-//FLUTTER NATIVE
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import "dart:math";
-
-//PAQUETS INSTALATS
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:max_count/src/models/hex_color.dart';
+import 'package:max_count/src/screens/screens.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-//MODELS
-import 'package:max_count/src/models/hex_color.dart';
-
-//SCREENS
-import 'package:max_count/src/screens/screens.dart';
 
 class Home extends StatefulWidget {
-  bool initialSounds;
-
-  Home({required this.initialSounds});
-
   @override
   _HomeState createState() => _HomeState();
 }
@@ -46,17 +33,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   bool isCoolingDown = false;
 
   final _inputController = TextEditingController();
-  final AudioPlayer player = AudioPlayer();
+  late AudioPlayer player;
 
-  late bool wantsAudio;
+  bool wantsAudio = true;
 
   @override
   void initState() {
     super.initState();
 
-    wantsAudio = widget.initialSounds;
-
     WidgetsBinding.instance!.addObserver(this);
+    player = AudioPlayer();
 
     _activateListeners();
   }
@@ -81,7 +67,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             .catchError((error) =>
                 _displayToastError("Error", "We encountered a network error"));
       });
-      player.stop();
     } else if (state == AppLifecycleState.resumed) {
       _database.ref("maxCount/liveUsers").once().then((event) {
         _liveUsers = int.parse(event.snapshot.value.toString());
@@ -161,28 +146,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       return NoInternet();
     }
 
-    final AdManagerBannerAdListener _listener = AdManagerBannerAdListener(
-      onAdLoaded: (Ad ad) => print('Ad loaded.'),
-      onAdFailedToLoad: (Ad ad, LoadAdError error) {
-        ad.dispose();
-        print('Ad failed to load: $error');
-      },
-      onAdOpened: (Ad ad) => print('Ad opened.'),
-      onAdClosed: (Ad ad) => print('Ad closed.'),
-      onAdImpression: (Ad ad) => print('Ad impression.'),
-    );
-
-    final AdManagerBannerAd myBanner = AdManagerBannerAd(
-      adUnitId: 'ca-app-pub-6805626204344763/8322012453',
-      sizes: [
-        AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
-      ],
-      request: AdManagerAdRequest(),
-      listener: _listener,
-    );
-
-    myBanner.load();
-
     return GestureDetector(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
@@ -191,7 +154,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           resizeToAvoidBottomInset: false,
           backgroundColor: HexColor.fromHex("#5ED466"),
           body: SafeArea(
-            minimum: EdgeInsets.only(top: 16.0, bottom: 30),
             child: Container(
               height: height,
               width: width,
@@ -209,7 +171,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             fontSize: 50,
                             fontFamily: 'PixelTitle',
                             color: Colors.black),
-                        maxLines: 1,
+                        maxLines: 2,
                       ),
                       SizedBox(
                         height: 7,
@@ -234,9 +196,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             onPressed: () {
                               setState(() {
                                 wantsAudio = !wantsAudio;
-                                SharedPreferences.getInstance().then((value) {
-                                  value.setBool("wantsSounds", wantsAudio);
-                                });
                               });
                             },
                           ),
@@ -353,13 +312,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                   minimumSize: Size(30, 50)),
                               child: Icon(Icons.check)),
                         ],
-                      ),
-                      Expanded(child: Container()),
-                      Container(
-                        margin: EdgeInsets.only(left: 5, right: 5),
-                        child: AdWidget(ad: myBanner),
-                        width: width,
-                        height: 100,
                       )
                     ]),
               ),
@@ -413,7 +365,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ).show(context);
               _playError();
               t.cancel;
-              _activateCooldown();
             } else {
               _activateCooldown();
               if (_numLives == 1) {
@@ -490,8 +441,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _displayToastError(String title, String description) {
-    FocusScope.of(context).unfocus();
-
     MotionToast(
       icon: Icons.priority_high,
       title: Text(
