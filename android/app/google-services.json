@@ -8,12 +8,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1051149369110:android:cf25f1eda725d8efd61a37",
+        "mobilesdk_app_id": "1:1051149369110:android:91d659344e0620f4d61a37",
         "android_client_info": {
-          "package_name": "com.projectk.maxcount"
+          "package_name": "com.projectk.vxgamez.maxcount"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "1051149369110-fohm0v5vpmngv8chpjr90dme47pbtl82.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.projectk.vxgamez.maxcount",
+            "certificate_hash": "96530daec1fcf8c23ab384387daa031a3f347c87"
+          }
+        },
         {
           "client_id": "1051149369110-qo5ul231popukgv4qt6l6atcfkgimlj9.apps.googleusercontent.com",
           "client_type": 3

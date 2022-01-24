@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>1051149369110-qfqk92d3rq626m84r4tiujpt8dmpjpf2.apps.googleusercontent.com</string>
+	<string>1051149369110-trgs537vbu296g0m2k0dndohchlcjgf4.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.1051149369110-qfqk92d3rq626m84r4tiujpt8dmpjpf2</string>
+	<string>com.googleusercontent.apps.1051149369110-trgs537vbu296g0m2k0dndohchlcjgf4</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1051149369110-fohm0v5vpmngv8chpjr90dme47pbtl82.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCEjzLyJCW9jbl3ixonyd5SxFDu18qVdcg</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.projectk.maxcount</string>
+	<string>com.projectk.vxgamez.maxcount</string>
 	<key>PROJECT_ID</key>
 	<string>max-count</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1051149369110:ios:f1d4e9c939667b4cd61a37</string>
+	<string>1:1051149369110:ios:7e2fb4e879f24412d61a37</string>
 	<key>DATABASE_URL</key>
 	<string>https://max-count-default-rtdb.europe-west1.firebasedatabase.app</string>
 </dict>
