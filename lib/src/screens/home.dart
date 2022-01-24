@@ -76,15 +76,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == true) {
           value.setBool("isLive", false);
-          _database.ref("maxCount/liveUsers").once().then((event) {
-            _liveUsers = int.parse(event.snapshot.value.toString());
-            _liveUsers--;
-            _database
-                .ref("maxCount/")
-                .update({"liveUsers": _liveUsers})
-                .then((v) {})
-                .catchError((error) => _displayToastError(
-                    "Error", "We encountered a network error"));
+          Future.microtask(() {
+            _database.ref("maxCount/").update({
+              "liveUsers": ServerValue.increment(-1),
+            });
           });
         }
       });
@@ -93,15 +88,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == false) {
           value.setBool("isLive", true);
-          _database.ref("maxCount/liveUsers").once().then((event) {
-            _liveUsers = int.parse(event.snapshot.value.toString());
-            _liveUsers++;
-            _database
-                .ref("maxCount/")
-                .update({"liveUsers": _liveUsers})
-                .then((v) {})
-                .catchError((error) => _displayToastError(
-                    "Error", "We encountered a network error"));
+
+          Future.microtask(() {
+            _database.ref("maxCount/").update({
+              "liveUsers": ServerValue.increment(1),
+            });
           });
         }
       });
@@ -133,6 +124,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       vides ??= 0;
       setState(() {
         _liveUsers = int.parse(vides.toString());
+      });
+      Future.microtask(() {
+        if (_liveUsers <= 0) {
+          _database.ref("maxCount/").update({
+            "liveUsers": 1,
+          });
+        }
       });
     });
   }
@@ -398,8 +396,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 "You may want to rethink that....",
                 "Wait 5 seconds between obvious mistakes...",
                 "Don't insist...",
-                "Are you trying to fuck up the score?",
-                "C'mon... rethink that again!"
+                "Are you trying to influence up the score?",
+                "Come mon... rethink that again!"
               ];
               final _random = Random();
               var element = list[_random.nextInt(list.length)];
@@ -426,32 +424,41 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               _activateCooldown();
               if (_numLives == 1) {
                 _playReset();
-                _database.ref("maxCount/").update({"lives": 3}).then((value) {
-                  _database
-                      .ref("maxCount/")
-                      .update({"number": "0"})
-                      .then((value) {})
-                      .catchError((error) => _displayToastError(
-                          "Error", "We encountered a network error"));
-                }).catchError((error) => _displayToastError(
-                    "Error", "We encountered a network error"));
-              } else {
-                _playErrorNumber();
-                _numLives--;
                 _database
                     .ref("maxCount/")
-                    .update({"lives": _numLives})
+                    .update({"number": "0", "lives": 3})
                     .then((value) {})
                     .catchError((error) => _displayToastError(
                         "Error", "We encountered a network error"));
+
+                await _database.ref("maxCount/").update({
+                  "totalResets": ServerValue.increment(1),
+                });
+              } else {
+                await _database.ref("maxCount/").update({
+                  "lives": ServerValue.increment(-1),
+                });
+                _playErrorNumber();
               }
             }
           } else {
-            _database.ref("maxCount/").update(
-                {"number": input.toStringAsFixed(0)}).then((value) {
+            TransactionResult result = await _database
+                .ref("maxCount/number")
+                .runTransaction((Object? post) {
+              if (post == null) {
+                return Transaction.abort();
+              }
+
+              print(post);
+
+              String _post = post as String;
+              _post = (double.parse(_initialNumber) + 1).toStringAsFixed(0);
+
+              return Transaction.success(_post);
+            }, applyLocally: false);
+            if (result.committed) {
               _playSuccess();
-            }).catchError((error) =>
-                _displayToastError("Error", "We encountered a network error"));
+            }
           }
         }
         _inputController.clear();
