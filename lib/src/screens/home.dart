@@ -10,9 +10,8 @@ import 'dart:io' show Platform;
 //PAQUETS INSTALATS
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:motion_toast/motion_toast.dart';
-import 'package:motion_toast/resources/arrays.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +35,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   String _initialNumber = "";
+  String _requiredNextNumber = "";
   int _numLives = 3;
   int _liveUsers = -1;
   final _database = FirebaseDatabase.instance;
@@ -45,9 +45,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   late Timer t;
   bool isCoolingDown = false;
+  bool needsCooldown = false;
 
   final _inputController = TextEditingController();
   final AudioPlayer player = AudioPlayer();
+
+  double value = 0;
+
+  late ToastFuture tf;
+
+  int remaining = 10;
 
   late bool wantsAudio;
 
@@ -100,6 +107,22 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
   }
 
+  void calculateNextString(List<String> list, int index) {
+    if (index == -1) {
+      list.insert(0, "1");
+      return;
+    } else {
+      if (list[index] == '9') {
+        list[index] = '0';
+        index--;
+        calculateNextString(list, index);
+      } else {
+        list[index] = (double.parse(list[index]) + 1).toStringAsFixed(0);
+        return;
+      }
+    }
+  }
+
   void _activateListeners() {
     _numberStream = _database.ref("maxCount/number").onValue.listen((event) {
       Object newNumber = event.snapshot.value!;
@@ -108,6 +131,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           _playReset();
         }
         _initialNumber = newNumber as String;
+        Future.microtask(() {
+          List<String> list = _initialNumber.split("");
+          calculateNextString(list, list.length - 1);
+          _requiredNextNumber = list.join("");
+        });
       });
     });
     _liveStream = _database.ref("maxCount/lives").onValue.listen((event) {
@@ -252,7 +280,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                        height: height * 0.05,
+                        height: height * 0.03,
                       ),
                       AutoSizeText(
                         "Remaining Lives",
@@ -270,7 +298,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         children: _generateLives(),
                       ),
                       SizedBox(
-                        height: height * 0.05,
+                        height: height * 0.03,
                       ),
                       Container(
                         width: width * 0.6,
@@ -302,7 +330,33 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         ),
                       ),
                       SizedBox(
-                        height: height * 0.07,
+                        height: isCoolingDown ? height * 0.04 : height * 0.065,
+                      ),
+                      isCoolingDown
+                          ? Text(
+                              "Wait $remaining seconds before trying again...",
+                              style: GoogleFonts.vt323(
+                                  textStyle: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)))
+                          : Container(),
+                      SizedBox(
+                        height: isCoolingDown ? height * 0.005 : 0,
+                      ),
+                      isCoolingDown
+                          ? Padding(
+                              padding: EdgeInsets.only(
+                                  left: width * 0.2, right: width * 0.2),
+                              child: LinearProgressIndicator(
+                                value: value,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    HexColor.fromHex("#fe0100")),
+                                backgroundColor: Colors.white,
+                              ),
+                            )
+                          : Container(),
+                      SizedBox(
+                        height: height * 0.01,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -378,49 +432,47 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (Provider.of<InternetConnectionStatus>(contexte, listen: false) ==
         InternetConnectionStatus.connected) {
       if (_inputController.text.isEmpty) {
-        _displayToastError(
-            "Input Empty", "Please add a number before submiting");
+        _displayToastError("Please add a number before submiting");
         _playError();
       } else {
-        double current = double.parse(_initialNumber);
-        double input = double.parse(_inputController.text);
-        if (current > input + 10 || current < input - 10) {
-          _displayToastError(
-              "Not Valid", "Come on... that's obviously not the next number");
+        if (isCoolingDown) {
+          var list = [
+            "You may want to rethink that....",
+            "Wait 5 seconds between obvious mistakes...",
+            "Don't insist...",
+            "Are you trying to influence up the score?",
+            "Come mon... rethink that again!",
+            "Are you for real? You can see you have to wait",
+            "Please wait for the cooldown to finish",
+            "Wait for the cooldown...",
+            "Take your time to think your answer",
+            "Did you really want to do that?"
+          ];
+          final _random = Random();
+          var element = list[_random.nextInt(list.length)];
+          needsCooldown = true;
+          _displayToastError(element);
           _playError();
         } else {
-          current = double.parse(_initialNumber);
-          if (current != input - 1) {
-            if (isCoolingDown) {
-              var list = [
-                "You may want to rethink that....",
-                "Wait 5 seconds between obvious mistakes...",
-                "Don't insist...",
-                "Are you trying to influence up the score?",
-                "Come mon... rethink that again!"
-              ];
-              final _random = Random();
-              var element = list[_random.nextInt(list.length)];
-              MotionToast(
-                icon: Icons.priority_high,
-                title: Text(
-                  "Error",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-                description: Text(element),
-                position: MOTION_TOAST_POSITION.top,
-                primaryColor: Colors.red,
-                enableAnimation: false,
-                animationDuration: Duration(milliseconds: 300),
-                toastDuration: Duration(seconds: 1),
-                animationCurve: Curves.fastOutSlowIn,
-                secondaryColor: HexColor.fromHex("#fe0100"),
-                animationType: ANIMATION.fromTop,
-              ).show(context);
-              _playError();
-              t.cancel;
-              _activateCooldown();
-            } else {
+          double current = 0;
+          double input = 0;
+          if (_initialNumber.length > 6) {
+            var remot = _initialNumber.substring(_initialNumber.length - 3);
+            var local = _inputController.text
+                .substring(_inputController.text.length - 3);
+            current = double.parse(remot);
+            input = double.parse(local);
+          } else {
+            current = double.parse(_initialNumber);
+            input = double.parse(_inputController.text);
+          }
+
+          if (current > input + 10 || current < input - 10) {
+            _displayToastError(
+                "Come on... that's obviously not the next number");
+            _playError();
+          } else {
+            if (_inputController.text != _requiredNextNumber) {
               _activateCooldown();
               if (_numLives == 1) {
                 _playReset();
@@ -428,8 +480,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     .ref("maxCount/")
                     .update({"number": "0", "lives": 3})
                     .then((value) {})
-                    .catchError((error) => _displayToastError(
-                        "Error", "We encountered a network error"));
+                    .catchError((error) =>
+                        _displayToastError("We encountered a network error"));
 
                 await _database.ref("maxCount/").update({
                   "totalResets": ServerValue.increment(1),
@@ -440,31 +492,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 });
                 _playErrorNumber();
               }
-            }
-          } else {
-            TransactionResult result = await _database
-                .ref("maxCount/number")
-                .runTransaction((Object? post) {
-              if (post == null) {
-                return Transaction.abort();
-              }
-
-              print(post);
-
-              String _post = post as String;
-              _post = (double.parse(_initialNumber) + 1).toStringAsFixed(0);
-
-              return Transaction.success(_post);
-            }, applyLocally: false);
-            if (result.committed) {
+            } else {
+              await _database.ref("maxCount/").update({
+                "number": _requiredNextNumber,
+              });
               _playSuccess();
             }
           }
         }
+
         _inputController.clear();
       }
     } else {
-      _displayToastError("No Connection", "Please connect to the internet");
+      _displayToastError("Please connect to the internet");
       _playError();
     }
   }
@@ -498,31 +538,50 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _activateCooldown() {
-    isCoolingDown = true;
-    t = Timer(Duration(seconds: 5), () {
-      isCoolingDown = false;
-    });
+    if (isCoolingDown == false) {
+      isCoolingDown = true;
+      FocusManager.instance.primaryFocus?.unfocus();
+      value = 0;
+      remaining = 10;
+      Timer.periodic(Duration(seconds: 1), (Timer timer) {
+        setState(() {
+          if (value >= 0.9) {
+            isCoolingDown = false;
+            needsCooldown = false;
+            timer.cancel();
+          } else {
+            value = value + 0.1;
+            if (remaining > 0) {
+              remaining = remaining - 1;
+            }
+          }
+        });
+      });
+      setState(() {});
+    }
   }
 
-  void _displayToastError(String title, String description) {
-    FocusScope.of(context).unfocus();
+  void _displayToastError(String title) {
+    FocusManager.instance.primaryFocus?.unfocus();
 
-    MotionToast(
-      icon: Icons.priority_high,
-      title: Text(
-        title,
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-      ),
-      description: Text(description),
-      position: MOTION_TOAST_POSITION.top,
-      primaryColor: Colors.red,
-      enableAnimation: false,
-      animationDuration: Duration(milliseconds: 300),
-      toastDuration: Duration(seconds: 2),
-      animationCurve: Curves.fastOutSlowIn,
-      secondaryColor: HexColor.fromHex("#fe0100"),
-      animationType: ANIMATION.fromTop,
-    ).show(context);
+    showToast(
+      title,
+      context: context,
+      animation: StyledToastAnimation.scale,
+      reverseAnimation: StyledToastAnimation.fade,
+      position: StyledToastPosition.center,
+      animDuration: Duration(seconds: 1),
+      duration: Duration(seconds: 3),
+      reverseEndOffset: Offset(0, 20),
+      curve: Curves.elasticOut,
+      onDismiss: () {
+        if (needsCooldown == true) {
+          needsCooldown = false;
+          _activateCooldown();
+        }
+      },
+      reverseCurve: Curves.linear,
+    );
   }
 
   List<Widget> _generateLives() {
