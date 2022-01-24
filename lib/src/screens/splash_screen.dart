@@ -34,11 +34,6 @@ void _onboardingDone(context) {
 class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
-    return Onboarding1(callback: () {
-      _onboardingDone(context);
-      setState(() {});
-    });
-
     if (SplashScreen.hasLoaded) {
       if (widget.hasOnboard) {
         return Onboarding1(callback: () {
