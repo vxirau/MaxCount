@@ -29,6 +29,7 @@ dependencies:
   google_mobile_ads: ^1.0.1
   nice_intro: ^0.1.4
   flutter_styled_toast: ^2.0.0
+  firebase_app_check: ^0.0.6+4
 
 dev_dependencies:
   flutter_test:

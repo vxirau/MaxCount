@@ -3,11 +3,19 @@ PODS:
     - Flutter
   - audio_session (0.0.1):
     - Flutter
+  - Firebase/AppCheck (8.10.0):
+    - Firebase/CoreOnly
+    - FirebaseAppCheck (~> 8.10.0-beta)
   - Firebase/CoreOnly (8.10.0):
     - FirebaseCore (= 8.10.0)
   - Firebase/Database (8.10.0):
     - Firebase/CoreOnly
     - FirebaseDatabase (~> 8.10.0)
+  - firebase_app_check (0.0.6-4):
+    - Firebase/AppCheck (~> 8.10.0)
+    - Firebase/CoreOnly (~> 8.10.0)
+    - firebase_core
+    - Flutter
   - firebase_core (1.11.0):
     - Firebase/CoreOnly (= 8.10.0)
     - Flutter
@@ -15,6 +23,10 @@ PODS:
     - Firebase/Database (= 8.10.0)
     - firebase_core
     - Flutter
+  - FirebaseAppCheck (8.10.0-beta):
+    - FirebaseCore (~> 8.0)
+    - GoogleUtilities/Environment (~> 7.6)
+    - PromisesObjC (< 3.0, >= 1.2)
   - FirebaseCore (8.10.0):
     - FirebaseCoreDiagnostics (~> 8.0)
     - GoogleUtilities/Environment (~> 7.6)
@@ -99,6 +111,7 @@ PODS:
 DEPENDENCIES:
   - audio_service (from `.symlinks/plugins/audio_service/ios`)
   - audio_session (from `.symlinks/plugins/audio_session/ios`)
+  - firebase_app_check (from `.symlinks/plugins/firebase_app_check/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_database (from `.symlinks/plugins/firebase_database/ios`)
   - Flutter (from `Flutter`)
@@ -111,6 +124,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - Firebase
+    - FirebaseAppCheck
     - FirebaseCore
     - FirebaseCoreDiagnostics
     - FirebaseDatabase
@@ -129,6 +143,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/audio_service/ios"
   audio_session:
     :path: ".symlinks/plugins/audio_session/ios"
+  firebase_app_check:
+    :path: ".symlinks/plugins/firebase_app_check/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_database:
@@ -150,8 +166,10 @@ SPEC CHECKSUMS:
   audio_service: f509d65da41b9521a61f1c404dd58651f265a567
   audio_session: 4f3e461722055d21515cf3261b64c973c062f345
   Firebase: 44213362f1dcc52555b935dc925ed35ac55f1b20
+  firebase_app_check: 42198dc31c7fadef8d75fb02ca71b21380795d37
   firebase_core: 2ca2d6cc8a11693e701b37126afae4800be5dbac
   firebase_database: 54f02e0bac6bac2d21436ac3d4c83f8f34a9f219
+  FirebaseAppCheck: 4bb7c14da666a15dd7b4d55df2728832da9e7c72
   FirebaseCore: 04186597c095da37d90ff9fd3e53bc61a1ff2440
   FirebaseCoreDiagnostics: 64d9709d804a6c25bd77841371c1fcfd909d5601
   FirebaseDatabase: 5f3e83b0a0d8759378fbd5d05661244d14dfbbb0
@@ -171,6 +189,6 @@ SPEC CHECKSUMS:
   shared_preferences_ios: aef470a42dc4675a1cdd50e3158b42e3d1232b32
   sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
 
-PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+PODFILE CHECKSUM: 76aaac2b301aa40241aa71d54b58fe3a3c060f7b
 
 COCOAPODS: 1.11.2

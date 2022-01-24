@@ -1,5 +1,6 @@
 //FLUTTER NATIVE
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -83,12 +84,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future _gestionaAsync(context) async {
     await Firebase.initializeApp();
-    await MobileAds.instance.initialize();
-    List<String> testDeviceIds = ['F7549B55838E8EC844A21FC0ACEBA956'];
+    await FirebaseAppCheck.instance.activate();
 
-    RequestConfiguration configuration =
-        RequestConfiguration(testDeviceIds: testDeviceIds);
-    MobileAds.instance.updateRequestConfiguration(configuration);
+    await MobileAds.instance.initialize();
+    // List<String> testDeviceIds = ['F7549B55838E8EC844A21FC0ACEBA956'];
+
+    // RequestConfiguration configuration =
+    //     RequestConfiguration(testDeviceIds: testDeviceIds);
+    // MobileAds.instance.updateRequestConfiguration(configuration);
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 

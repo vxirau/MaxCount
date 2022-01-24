@@ -478,14 +478,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 _playReset();
                 _database
                     .ref("maxCount/")
-                    .update({"number": "0", "lives": 3})
+                    .update({
+                      "number": "0",
+                      "lives": 3,
+                      "totalResets": ServerValue.increment(1)
+                    })
                     .then((value) {})
                     .catchError((error) =>
                         _displayToastError("We encountered a network error"));
-
-                await _database.ref("maxCount/").update({
-                  "totalResets": ServerValue.increment(1),
-                });
               } else {
                 await _database.ref("maxCount/").update({
                   "lives": ServerValue.increment(-1),
