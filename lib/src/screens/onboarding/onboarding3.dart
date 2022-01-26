@@ -28,6 +28,7 @@ class _Onboarding3State extends State<Onboarding3> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
 
     return Scaffold(
       backgroundColor: HexColor.fromHex("#5ED466"),
@@ -35,8 +36,8 @@ class _Onboarding3State extends State<Onboarding3> {
         child: Padding(
           padding: EdgeInsets.only(left: 20.0, right: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                 height: height * 0.025,
@@ -87,11 +88,17 @@ class _Onboarding3State extends State<Onboarding3> {
                     height: 40,
                   ),
                   ClipRRect(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: shortestSide < 600
+                          ? BorderRadius.circular(10.0)
+                          : BorderRadius.circular(20.0),
                       child: Container(
-                        width: width * 0.9,
+                        height: shortestSide < 600 ? null : width * 0.5,
+                        width: shortestSide < 600 ? width * 0.8 : null,
                         child: Center(
-                          child: Image.asset('assets/fun.gif'),
+                          child: Image.asset(
+                            'assets/fun.gif',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       )),
                   SizedBox(
@@ -99,31 +106,24 @@ class _Onboarding3State extends State<Onboarding3> {
                   ),
                 ],
               )),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                      onPressed: () {
-                        widget.callback();
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          primary: HexColor.fromHex("#fe0100"),
-                          side: BorderSide(width: 3.0, color: Colors.black),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                          minimumSize: Size(width * 0.5, 60)),
-                      child: AutoSizeText(
-                        "Finish",
-                        style: GoogleFonts.vt323(
-                            textStyle: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        maxLines: 1,
-                      ))
-                ],
-              ),
+              ElevatedButton(
+                  onPressed: () {
+                    widget.callback();
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      primary: HexColor.fromHex("#fe0100"),
+                      side: BorderSide(width: 3.0, color: Colors.black),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                      minimumSize: Size(width * 0.5, 60)),
+                  child: AutoSizeText(
+                    "Finish",
+                    style: GoogleFonts.vt323(
+                        textStyle: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    maxLines: 1,
+                  )),
               SizedBox(
                 height: height * 0.035,
               ),

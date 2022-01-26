@@ -27,6 +27,7 @@ class _Onboarding1State extends State<Onboarding1> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
 
     return Scaffold(
       backgroundColor: HexColor.fromHex("#5ED466"),
@@ -34,8 +35,8 @@ class _Onboarding1State extends State<Onboarding1> {
         child: Padding(
           padding: EdgeInsets.only(left: 20.0, right: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                 height: height * 0.025,
@@ -75,7 +76,7 @@ class _Onboarding1State extends State<Onboarding1> {
                     height: 10,
                   ),
                   AutoSizeText(
-                    "Compete with other players to count as high as possible.",
+                    "Compete with other players to count as high as possible in realtime.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.vt323(
                         textStyle: TextStyle(
@@ -86,10 +87,16 @@ class _Onboarding1State extends State<Onboarding1> {
                     height: 40,
                   ),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: shortestSide < 600
+                        ? BorderRadius.circular(10.0)
+                        : BorderRadius.circular(20.0),
                     child: Container(
-                      width: width * 0.9,
-                      child: Image.asset('assets/intro.gif'),
+                      height: shortestSide < 600 ? null : width * 0.4,
+                      width: shortestSide < 600 ? width * 0.8 : null,
+                      child: Image.asset(
+                        'assets/intro.gif',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                   SizedBox(

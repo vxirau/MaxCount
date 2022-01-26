@@ -103,17 +103,6 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     prefs.setBool("isLive", true);
-    final _database = FirebaseDatabase.instance;
-    _database.ref("maxCount/liveUsers").once().then((event) {
-      int _liveUsers = int.parse(event.snapshot.value.toString());
-      _liveUsers++;
-      _database
-          .ref("maxCount/")
-          .update({"liveUsers": _liveUsers})
-          .then((v) {})
-          .catchError((error) => {});
-    });
-
     if (prefs.containsKey("hasOnboarding")) {
       context.widget.hasOnboard = prefs.getBool("hasOnboarding");
     } else {

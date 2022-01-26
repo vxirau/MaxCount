@@ -29,6 +29,7 @@ class _Onboarding2State extends State<Onboarding2> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
 
     return Scaffold(
       backgroundColor: HexColor.fromHex("#5ED466"),
@@ -36,8 +37,8 @@ class _Onboarding2State extends State<Onboarding2> {
         child: Padding(
           padding: EdgeInsets.only(left: 20.0, right: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                 height: height * 0.025,
@@ -77,7 +78,7 @@ class _Onboarding2State extends State<Onboarding2> {
                     height: 10,
                   ),
                   AutoSizeText(
-                    "If you input the wrong number you will be penalized with a life. If you loose all three the counter restarts. Globally.",
+                    "If you input a wrong number, you will be penalized with a life. When you lose all three the counter restarts globally.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.vt323(
                         textStyle: TextStyle(
@@ -88,11 +89,17 @@ class _Onboarding2State extends State<Onboarding2> {
                     height: 40,
                   ),
                   ClipRRect(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: shortestSide < 600
+                          ? BorderRadius.circular(10.0)
+                          : BorderRadius.circular(20.0),
                       child: Container(
-                        width: width * 0.9,
+                        height: shortestSide < 600 ? null : width * 0.6,
+                        width: shortestSide < 600 ? width * 0.8 : null,
                         child: Center(
-                          child: Image.asset('assets/game_over.gif'),
+                          child: Image.asset(
+                            'assets/game_over.gif',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       )),
                   SizedBox(

@@ -39,13 +39,16 @@ class _NoInternetState extends State<NoInternet> {
                       SizedBox(
                         height: 10,
                       ),
-                      AutoSizeText(
-                        "Max Count",
-                        style: TextStyle(
-                            fontSize: 50,
-                            fontFamily: 'PixelTitle',
-                            color: Colors.black),
-                        maxLines: 2,
+                      Padding(
+                        padding: EdgeInsets.only(left: 8.0, right: 8.0),
+                        child: AutoSizeText(
+                          "Max Count",
+                          style: TextStyle(
+                              fontSize: 50,
+                              fontFamily: 'PixelTitle',
+                              color: Colors.black),
+                          maxLines: 1,
+                        ),
                       ),
                       SizedBox(
                         height: 7,
@@ -56,7 +59,7 @@ class _NoInternetState extends State<NoInternet> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "No internet",
+                                "No internet connection!",
                                 style: GoogleFonts.vt323(
                                     textStyle: TextStyle(
                                         fontSize: 30,
@@ -66,7 +69,7 @@ class _NoInternetState extends State<NoInternet> {
                                 padding: EdgeInsets.only(
                                     top: 8.0, bottom: 8.0, left: 20, right: 20),
                                 child: Text(
-                                  "Please connect to the internet to use the app",
+                                  "Please connect to the internet to use the app.",
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.vt323(
                                       textStyle: TextStyle(

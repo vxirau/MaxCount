@@ -36,7 +36,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   String _initialNumber = "";
   String _requiredNextNumber = "";
-  int _numLives = 3;
+  int _numLives = 0;
   int _liveUsers = -1;
   final _database = FirebaseDatabase.instance;
   late StreamSubscription _numberStream;
@@ -82,11 +82,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == true) {
-          value.setBool("isLive", false);
           Future.microtask(() {
             _database.ref("maxCount/").update({
               "liveUsers": ServerValue.increment(-1),
             });
+            value.setBool("isLive", false);
           });
         }
       });
@@ -94,12 +94,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == false) {
-          value.setBool("isLive", true);
-
           Future.microtask(() {
             _database.ref("maxCount/").update({
               "liveUsers": ServerValue.increment(1),
             });
+            value.setBool("isLive", true);
           });
         }
       });
@@ -195,18 +194,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (Platform.isAndroid) {
       myBanner = AdManagerBannerAd(
         adUnitId: 'ca-app-pub-6805626204344763/5143161253',
-        sizes: [
-          AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
-        ],
+        sizes: [AdSize(width: width.toInt(), height: (height * 0.1).toInt())],
         request: AdManagerAdRequest(),
         listener: _listener,
       );
     } else {
       myBanner = AdManagerBannerAd(
         adUnitId: 'ca-app-pub-6805626204344763/8322012453',
-        sizes: [
-          AdSize(width: width.toInt() - 10, height: (height * 0.1).toInt())
-        ],
+        sizes: [AdSize(width: width.toInt(), height: (height * 0.1).toInt())],
         request: AdManagerAdRequest(),
         listener: _listener,
       );
@@ -222,7 +217,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           resizeToAvoidBottomInset: false,
           backgroundColor: HexColor.fromHex("#5ED466"),
           body: SafeArea(
-            minimum: EdgeInsets.only(top: 16.0, bottom: 30),
+            minimum: EdgeInsets.only(top: 16.0, bottom: 20),
             child: Container(
               height: height,
               width: width,
@@ -254,7 +249,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             width: width * 0.05,
                           ),
                           AutoSizeText(
-                            "Live Users: $_liveUsers",
+                            _liveUsers < 0
+                                ? "Live Users: -"
+                                : "Live Users: $_liveUsers",
                             style: GoogleFonts.vt323(
                                 textStyle: TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.bold)),
@@ -319,7 +316,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           padding: EdgeInsets.only(left: 5, right: 5),
                           child: Center(
                             child: AutoSizeText(
-                              _initialNumber,
+                              _initialNumber.length == 0
+                                  ? "--"
+                                  : _initialNumber,
                               style: GoogleFonts.vt323(
                                   textStyle: TextStyle(
                                       fontSize: 60,
@@ -415,12 +414,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         ],
                       ),
                       Expanded(child: Container()),
-                      Container(
-                        margin: EdgeInsets.only(left: 5, right: 5),
-                        child: AdWidget(ad: myBanner),
+                      /*Container(
+                        child: Center(child: AdWidget(ad: myBanner)),
                         width: width,
                         height: 100,
                       )
+                      */
                     ]),
               ),
             ),
