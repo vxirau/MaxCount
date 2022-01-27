@@ -102,7 +102,10 @@ class _SplashScreenState extends State<SplashScreen> {
       context.widget.wantsSounds = true;
     }
 
-    prefs.setBool("isLive", true);
+    if (prefs.getBool("isLive") == false) {
+      prefs.setBool("isLive", true);
+    }
+
     if (prefs.containsKey("hasOnboarding")) {
       context.widget.hasOnboard = prefs.getBool("hasOnboarding");
     } else {

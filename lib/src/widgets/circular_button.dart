@@ -16,22 +16,24 @@ class CircularButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey,
         border: Border.all(color: Colors.black, width: 3),
         shape: BoxShape.circle,
       ),
-      height: 60.0,
-      width: 60.0, // button width and height
+      height: shortestSide < 600 ? 60.0 : 80,
+      width: shortestSide < 600 ? 60.0 : 80,
       child: ClipOval(
         child: Material(
-          color: this.color, // button color
+          color: this.color,
           child: InkWell(
-              splashColor: this.splashColor, // splash color
+              splashColor: this.splashColor,
               onTap: () {
                 onTap();
-              }, // button pressed
+              },
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: this.children)),

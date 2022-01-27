@@ -14,6 +14,7 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:max_count/src/widgets/countdown.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -37,11 +38,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   String _initialNumber = "";
   String _requiredNextNumber = "";
   int _numLives = 0;
+  int _regenerate = -1;
+  String _maxNumber = "";
+  String _nextMaxNumber = "";
   int _liveUsers = -1;
+  int _peticionsMin = -1;
+  int _maxPeticions = -1;
   final _database = FirebaseDatabase.instance;
-  late StreamSubscription _numberStream;
-  late StreamSubscription _liveStream;
-  late StreamSubscription _liveUsersStream;
+  late StreamSubscription _remoteStream;
+  late StreamSubscription _maxPeticionsStream;
 
   late Timer t;
   bool isCoolingDown = false;
@@ -73,13 +78,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
     player.dispose();
+    _remoteStream.cancel();
+    _maxPeticionsStream.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.inactive) {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == true) {
           Future.microtask(() {
@@ -123,57 +131,60 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _activateListeners() {
-    _numberStream = _database.ref("maxCount/number").onValue.listen((event) {
-      Object newNumber = event.snapshot.value!;
+    _maxPeticionsStream =
+        _database.ref("maxCount/maxPeticions").onValue.listen((event) {
+      Object? value = event.snapshot.value;
+      value ??= 10;
       setState(() {
-        if (newNumber == 0) {
+        _maxPeticions = value as int;
+        if (_peticionsMin < 0) {
+          _peticionsMin = _maxPeticions;
+        }
+      });
+    });
+
+    _remoteStream = _database.ref("maxCount").onValue.listen((event) {
+      Object? remoteDB = event.snapshot.value;
+      setState(() {
+        Map<String, dynamic> remote =
+            Map<String, dynamic>.from(remoteDB as Map);
+
+        _liveUsers = remote["liveUsers"] ??= 0;
+        _numLives = remote["lives"] ??= 0;
+        _regenerate = remote["lifeReset"] ??= 50;
+        _initialNumber = remote["number"];
+        _maxNumber = remote["maxNumber"];
+
+        if (_initialNumber == 0) {
           _playReset();
         }
-        _initialNumber = newNumber as String;
-        Future.microtask(() {
-          List<String> list = _initialNumber.split("");
-          calculateNextString(list, list.length - 1);
-          _requiredNextNumber = list.join("");
-        });
-      });
-    });
-    _liveStream = _database.ref("maxCount/lives").onValue.listen((event) {
-      Object? vides = event.snapshot.value;
-      vides ??= 0;
-      setState(() {
-        _numLives = int.parse(vides.toString());
-      });
-    });
-
-    _liveUsersStream =
-        _database.ref("maxCount/liveUsers").onValue.listen((event) {
-      Object? vides = event.snapshot.value;
-      vides ??= 0;
-      setState(() {
-        _liveUsers = int.parse(vides.toString());
       });
       Future.microtask(() {
-        if (_liveUsers <= 0) {
+        if (_liveUsers < 0) {
           _database.ref("maxCount/").update({
-            "liveUsers": 1,
+            "liveUsers": 0,
           });
         }
+        if (_regenerate == 0 && _numLives < 3) {
+          _database
+              .ref("maxCount/")
+              .update({"lives": ServerValue.increment(1), "lifeReset": 50});
+        }
+        List<String> list = _initialNumber.split("");
+        calculateNextString(list, list.length - 1);
+        _requiredNextNumber = list.join("");
+        List<String> maxNum = _maxNumber.split("");
+        calculateNextString(maxNum, maxNum.length - 1);
+        _nextMaxNumber = maxNum.join("");
       });
     });
-  }
-
-  @override
-  void deactivate() {
-    _numberStream.cancel();
-    _liveStream.cancel();
-    _liveUsersStream.cancel();
-    super.deactivate();
   }
 
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
 
     if (Provider.of<InternetConnectionStatus>(context) ==
         InternetConnectionStatus.disconnected) {
@@ -234,7 +245,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         child: AutoSizeText(
                           "Max Count",
                           style: TextStyle(
-                              fontSize: 50,
+                              fontSize: shortestSide < 600 ? 50 : 80,
                               fontFamily: 'PixelTitle',
                               color: Colors.black),
                           maxLines: 1,
@@ -254,14 +265,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                 : "Live Users: $_liveUsers",
                             style: GoogleFonts.vt323(
                                 textStyle: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold)),
+                                    fontSize: shortestSide < 600 ? 20 : 30,
+                                    fontWeight: FontWeight.bold)),
                             maxLines: 1,
                           ),
                           Expanded(child: Container()),
                           IconButton(
                             icon: wantsAudio
-                                ? Icon(Icons.volume_up)
-                                : Icon(Icons.volume_off_outlined),
+                                ? Icon(
+                                    Icons.volume_up,
+                                    size: shortestSide < 600 ? 25 : 35,
+                                  )
+                                : Icon(Icons.volume_off_outlined,
+                                    size: shortestSide < 600 ? 25 : 35),
                             onPressed: () {
                               setState(() {
                                 wantsAudio = !wantsAudio;
@@ -283,23 +299,48 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         "Remaining Lives",
                         style: GoogleFonts.vt323(
                             textStyle: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.bold)),
+                                fontSize: shortestSide < 600 ? 25 : 35,
+                                fontWeight: FontWeight.bold)),
                         maxLines: 1,
                       ),
                       SizedBox(
-                        height: 10,
+                        height: 5,
+                      ),
+                      _numLives < 3
+                          ? AutoSizeText(
+                              _regenerate == -1
+                                  ? "Guess -- more correctly to regenerate "
+                                  : "Guess $_regenerate more correctly to regenerate",
+                              style: GoogleFonts.vt323(
+                                  textStyle: TextStyle(
+                                      fontSize: shortestSide < 600 ? 17 : 24,
+                                      fontWeight: FontWeight.normal)),
+                              maxLines: 1,
+                            )
+                          : AutoSizeText(
+                              "Guess -- more correctly to regenerate ",
+                              style: GoogleFonts.vt323(
+                                  textStyle: TextStyle(
+                                      fontSize: 17,
+                                      color: Colors.transparent,
+                                      fontWeight: FontWeight.bold)),
+                              maxLines: 1,
+                            ),
+                      SizedBox(
+                        height: 5,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: _generateLives(),
+                        children: _generateLives(shortestSide),
                       ),
                       SizedBox(
                         height: height * 0.03,
                       ),
                       Container(
-                        width: width * 0.6,
-                        height: width * 0.3,
+                        width: width * 0.65,
+                        height:
+                            shortestSide < 600 ? width * 0.35 : width * 0.25,
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.white,
@@ -314,33 +355,77 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             ]),
                         child: Padding(
                           padding: EdgeInsets.only(left: 5, right: 5),
-                          child: Center(
-                            child: AutoSizeText(
-                              _initialNumber.length == 0
-                                  ? "--"
-                                  : _initialNumber,
-                              style: GoogleFonts.vt323(
-                                  textStyle: TextStyle(
-                                      fontSize: 60,
-                                      fontWeight: FontWeight.bold)),
-                              maxLines: 1,
-                            ),
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(top: 5.0, left: 5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CountDown(
+                                        maxPeticions: _maxPeticions,
+                                        numPeticions: _peticionsMin,
+                                        callback: () {
+                                          _peticionsMin = _maxPeticions;
+                                          setState(() {});
+                                        })
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AutoSizeText(
+                                        _initialNumber.isEmpty
+                                            ? "--"
+                                            : _initialNumber,
+                                        style: GoogleFonts.vt323(
+                                            textStyle: TextStyle(
+                                                fontSize: shortestSide < 600
+                                                    ? 60
+                                                    : 70,
+                                                fontWeight: FontWeight.bold)),
+                                        maxLines: 1,
+                                      ),
+                                      AutoSizeText(
+                                        _maxNumber.isEmpty
+                                            ? "Max Reached: --"
+                                            : "Max Reached: $_maxNumber",
+                                        style: GoogleFonts.vt323(
+                                            textStyle: TextStyle(
+                                                fontSize: shortestSide < 600
+                                                    ? 17
+                                                    : 30,
+                                                fontWeight: FontWeight.bold)),
+                                        maxLines: 1,
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: shortestSide < 600 ? 25 : 40,
+                              )
+                            ],
                           ),
                         ),
                       ),
                       SizedBox(
-                        height: isCoolingDown ? height * 0.04 : height * 0.065,
+                        height: isCoolingDown ? height * 0.02 : height * 0.04,
                       ),
                       isCoolingDown
                           ? Text(
                               "Wait $remaining seconds before trying again...",
                               style: GoogleFonts.vt323(
                                   textStyle: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: shortestSide < 600 ? 16 : 23,
                                       fontWeight: FontWeight.bold)))
                           : Container(),
                       SizedBox(
-                        height: isCoolingDown ? height * 0.005 : 0,
+                        height: isCoolingDown ? 5 : 0,
                       ),
                       isCoolingDown
                           ? Padding(
@@ -414,12 +499,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         ],
                       ),
                       Expanded(child: Container()),
-                      /*Container(
+                      Container(
                         child: Center(child: AdWidget(ad: myBanner)),
                         width: width,
                         height: 100,
                       )
-                      */
                     ]),
               ),
             ),
@@ -437,7 +521,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (isCoolingDown) {
           var list = [
             "You may want to rethink that....",
-            "Wait 5 seconds between obvious mistakes...",
+            "Wait 10 seconds between obvious mistakes...",
             "Don't insist...",
             "Are you trying to influence up the score?",
             "Come mon... rethink that again!",
@@ -471,31 +555,68 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 "Come on... that's obviously not the next number");
             _playError();
           } else {
-            if (_inputController.text != _requiredNextNumber) {
-              _activateCooldown();
-              if (_numLives == 1) {
-                _playReset();
-                _database
-                    .ref("maxCount/")
-                    .update({
-                      "number": "0",
-                      "lives": 3,
-                      "totalResets": ServerValue.increment(1)
-                    })
-                    .then((value) {})
-                    .catchError((error) =>
-                        _displayToastError("We encountered a network error"));
+            if (_peticionsMin > 0) {
+              _peticionsMin--;
+              if (_inputController.text != _requiredNextNumber) {
+                _activateCooldown();
+                if (_numLives == 1) {
+                  _playReset();
+                  _database
+                      .ref("maxCount/")
+                      .update({
+                        "number": "0",
+                        "lives": 3,
+                        "totalResets": ServerValue.increment(1),
+                      })
+                      .then((value) {})
+                      .catchError((error) =>
+                          _displayToastError("We encountered a network error"));
+                } else {
+                  await _database.ref("maxCount/").update({
+                    "lives": ServerValue.increment(-1),
+                  });
+                  _playErrorNumber();
+                }
               } else {
-                await _database.ref("maxCount/").update({
-                  "lives": ServerValue.increment(-1),
-                });
-                _playErrorNumber();
+                if (_peticionsMin < 4 && _peticionsMin > 0) {
+                  Future.microtask(() {
+                    _countDownToast("$_peticionsMin remaining...");
+                  });
+                } else if (_peticionsMin == 0) {
+                  Future.microtask(() {
+                    _countDownToast("Please wait for your petitions to reset");
+                  });
+                }
+                if (_maxNumber == _initialNumber) {
+                  if (_numLives == 3) {
+                    await _database.ref("maxCount/").update({
+                      "number": _requiredNextNumber,
+                      "maxNumber": _nextMaxNumber
+                    });
+                  } else {
+                    await _database.ref("maxCount/").update({
+                      "number": _requiredNextNumber,
+                      "lifeReset": ServerValue.increment(-1),
+                      "maxNumber": _nextMaxNumber
+                    });
+                  }
+                } else {
+                  if (_numLives == 3) {
+                    await _database
+                        .ref("maxCount/")
+                        .update({"number": _requiredNextNumber});
+                  } else {
+                    await _database.ref("maxCount/").update({
+                      "number": _requiredNextNumber,
+                      "lifeReset": ServerValue.increment(-1),
+                    });
+                  }
+                }
+
+                _playSuccess();
               }
             } else {
-              await _database.ref("maxCount/").update({
-                "number": _requiredNextNumber,
-              });
-              _playSuccess();
+              _displayToastError("Wait for your petitions to reset");
             }
           }
         }
@@ -560,6 +681,29 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
+  void _countDownToast(String title) {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    showToast(
+      title,
+      context: context,
+      animation: StyledToastAnimation.fade,
+      reverseAnimation: StyledToastAnimation.fade,
+      position: StyledToastPosition.center,
+      animDuration: Duration(milliseconds: 500),
+      duration: Duration(seconds: 2),
+      reverseEndOffset: Offset(0, 20),
+      curve: Curves.elasticOut,
+      onDismiss: () {
+        if (needsCooldown == true) {
+          needsCooldown = false;
+          _activateCooldown();
+        }
+      },
+      reverseCurve: Curves.linear,
+    );
+  }
+
   void _displayToastError(String title) {
     FocusManager.instance.primaryFocus?.unfocus();
 
@@ -583,12 +727,33 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
   }
 
-  List<Widget> _generateLives() {
+  List<Widget> _addRegenerate() {
+    List<Widget> regenerate = [];
+    regenerate.add(SizedBox(
+      height: 5,
+    ));
+    regenerate.add(AutoSizeText(
+      _regenerate == -1
+          ? "Guess -- more correctly to regenerate "
+          : "Guess $_regenerate more correctly to regenerate",
+      style: GoogleFonts.vt323(
+          textStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+      maxLines: 1,
+    ));
+    regenerate.add(
+      SizedBox(
+        height: 5,
+      ),
+    );
+    return regenerate;
+  }
+
+  List<Widget> _generateLives(shortestSide) {
     List<Widget> hearts = [];
     for (var i = 0; i < _numLives; i++) {
       hearts.add(Container(
-        height: 50,
-        width: 50,
+        height: shortestSide < 600 ? 50 : 70,
+        width: shortestSide < 600 ? 50 : 70,
         child: Image.asset(
           'assets/heart.png',
           fit: BoxFit.contain,
@@ -597,8 +762,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
     for (var i = _numLives; i < 3; i++) {
       hearts.add(Container(
-        height: 50,
-        width: 50,
+        height: shortestSide < 600 ? 50 : 70,
+        width: shortestSide < 600 ? 50 : 70,
         child: Image.asset(
           'assets/heart_gone.png',
           fit: BoxFit.contain,

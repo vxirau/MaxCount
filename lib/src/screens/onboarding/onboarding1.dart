@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 //PAQUETS INSTALATS
 import 'package:google_fonts/google_fonts.dart';
 import 'package:max_count/src/models/hex_color.dart';
-import 'package:max_count/src/screens/onboarding/onboarding2.dart';
 
 //SCREENS
 import 'package:max_count/src/screens/screens.dart';
@@ -43,7 +42,7 @@ class _Onboarding1State extends State<Onboarding1> {
               ),
               StatusBars(
                   position: 1,
-                  totalElements: 3,
+                  totalElements: 4,
                   selectedColor: Colors.black,
                   unselectedColor: Colors.black45),
               SizedBox(
@@ -52,7 +51,7 @@ class _Onboarding1State extends State<Onboarding1> {
               AutoSizeText(
                 "Max Count",
                 style: TextStyle(
-                    fontSize: 50,
+                    fontSize: shortestSide < 600 ? 50 : 80,
                     fontFamily: 'PixelTitle',
                     color: Colors.black),
                 maxLines: 1,
@@ -69,7 +68,8 @@ class _Onboarding1State extends State<Onboarding1> {
                     "Welcome!",
                     style: GoogleFonts.vt323(
                         textStyle: TextStyle(
-                            fontSize: 40, fontWeight: FontWeight.bold)),
+                            fontSize: shortestSide < 600 ? 40 : 80,
+                            fontWeight: FontWeight.bold)),
                     maxLines: 1,
                   ),
                   SizedBox(
@@ -80,7 +80,8 @@ class _Onboarding1State extends State<Onboarding1> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.vt323(
                         textStyle: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.bold)),
+                            fontSize: shortestSide < 600 ? 25 : 30,
+                            fontWeight: FontWeight.bold)),
                     maxLines: 3,
                   ),
                   SizedBox(
@@ -121,7 +122,7 @@ class _Onboarding1State extends State<Onboarding1> {
                       'Skip',
                       style: TextStyle(
                           color: Colors.black,
-                          fontSize: 20,
+                          fontSize: shortestSide < 600 ? 20 : 30,
                           fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -133,7 +134,7 @@ class _Onboarding1State extends State<Onboarding1> {
                       Icon(
                         Icons.arrow_forward,
                         color: Colors.white,
-                        size: 30,
+                        size: shortestSide < 600 ? 30 : 45,
                       )
                     ],
                     onTap: () {
@@ -142,7 +143,7 @@ class _Onboarding1State extends State<Onboarding1> {
                           RevealRoute(
                               page: Onboarding2(callback: widget.callback),
                               maxRadius: height * 2,
-                              centerAlignment: Alignment.bottomRight,
+                              centerAlignment: Alignment.center,
                               centerOffset: Offset(0, 0),
                               minRadius: 0));
                     },

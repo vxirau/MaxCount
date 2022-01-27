@@ -1,7 +1,6 @@
 //FLUTTER NATIVE
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 //ROUTES
 import 'package:max_count/src/routes/routes.dart';
 
@@ -41,12 +40,13 @@ class _MaxCountState extends State<MaxCount> {
   @override
   Widget build(BuildContext context) {
     return StreamProvider<InternetConnectionStatus>(
-        initialData: InternetConnectionStatus.connected,
-        create: (_) => InternetConnectionChecker().onStatusChange,
-        child: MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Max Count',
-            initialRoute: '/',
-            routes: getApplicationRoutes()));
+      initialData: InternetConnectionStatus.connected,
+      create: (_) => InternetConnectionChecker().onStatusChange,
+      child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Max Count',
+          initialRoute: '/',
+          routes: getApplicationRoutes()),
+    );
   }
 }
