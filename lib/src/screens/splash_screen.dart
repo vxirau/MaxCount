@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     return FutureBuilder(
-        future: _gestionaAsync(context), //,_gestionaAsync(),
+        future: _gestionaAsync(context),
         builder: (c, AsyncSnapshot asyncSnapshot) {
           if (asyncSnapshot.hasError) {
             return Center(child: Text("Error"));
@@ -103,13 +103,14 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     prefs.setBool("isLive", false);
-
     if (prefs.containsKey("hasOnboarding")) {
       context.widget.hasOnboard = prefs.getBool("hasOnboarding");
     } else {
       prefs.setBool("hasOnboarding", true);
       context.widget.hasOnboard = true;
     }
+
+    print(context.widget.hasOnboard);
 
     return 1;
   }

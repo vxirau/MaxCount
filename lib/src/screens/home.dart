@@ -14,7 +14,11 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:max_count/src/screens/dialogs/about.dart';
 import 'package:max_count/src/widgets/countdown.dart';
+import 'package:max_count/src/widgets/current_number.dart';
+import 'package:max_count/src/widgets/live_users.dart';
+import 'package:max_count/src/widgets/lives.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -37,16 +41,14 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   String _initialNumber = "";
   String _requiredNextNumber = "";
-  int _numLives = 0;
-  int _regenerate = -1;
   String _maxNumber = "";
   String _nextMaxNumber = "";
-  int _liveUsers = -1;
-  int _peticionsMin = -1;
-  int _maxPeticions = -1;
+
+  int _numLives = 0;
+
+  final number = ValueNotifier(15);
+
   final _database = FirebaseDatabase.instance;
-  late StreamSubscription _remoteStream;
-  late StreamSubscription _maxPeticionsStream;
 
   late Timer t;
   bool isCoolingDown = false;
@@ -70,16 +72,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     wantsAudio = widget.initialSounds;
 
     WidgetsBinding.instance!.addObserver(this);
-
-    _activateListeners();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
     player.dispose();
-    _remoteStream.cancel();
-    _maxPeticionsStream.cancel();
     super.dispose();
   }
 
@@ -128,56 +126,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         return;
       }
     }
-  }
-
-  void _activateListeners() {
-    _maxPeticionsStream =
-        _database.ref("maxCount/maxPeticions").onValue.listen((event) {
-      Object? value = event.snapshot.value;
-      value ??= 10;
-      setState(() {
-        _maxPeticions = value as int;
-        if (_peticionsMin < 0) {
-          _peticionsMin = _maxPeticions;
-        }
-      });
-    });
-
-    _remoteStream = _database.ref("maxCount").onValue.listen((event) {
-      Object? remoteDB = event.snapshot.value;
-      setState(() {
-        Map<String, dynamic> remote =
-            Map<String, dynamic>.from(remoteDB as Map);
-
-        _liveUsers = remote["liveUsers"] ??= 0;
-        _numLives = remote["lives"] ??= 0;
-        _regenerate = remote["lifeReset"] ??= 50;
-        _initialNumber = remote["number"];
-        _maxNumber = remote["maxNumber"];
-
-        if (_initialNumber == 0) {
-          _playReset();
-        }
-      });
-      Future.microtask(() {
-        if (_liveUsers < 0) {
-          _database.ref("maxCount/").update({
-            "liveUsers": 0,
-          });
-        }
-        if (_regenerate == 0 && _numLives < 3) {
-          _database
-              .ref("maxCount/")
-              .update({"lives": ServerValue.increment(1), "lifeReset": 50});
-        }
-        List<String> list = _initialNumber.split("");
-        calculateNextString(list, list.length - 1);
-        _requiredNextNumber = list.join("");
-        List<String> maxNum = _maxNumber.split("");
-        calculateNextString(maxNum, maxNum.length - 1);
-        _nextMaxNumber = maxNum.join("");
-      });
-    });
   }
 
   @override
@@ -270,16 +218,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           SizedBox(
                             width: width * 0.05,
                           ),
-                          AutoSizeText(
-                            _liveUsers < 0
-                                ? "Live Users: -"
-                                : "Live Users: $_liveUsers",
-                            style: GoogleFonts.vt323(
-                                textStyle: TextStyle(
-                                    fontSize: shortestSide < 600 ? 20 : 30,
-                                    fontWeight: FontWeight.bold)),
-                            maxLines: 1,
-                          ),
+                          LiveUsers(),
                           Expanded(child: Container()),
                           IconButton(
                             icon: wantsAudio
@@ -297,7 +236,21 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                 });
                               });
                             },
-                          ),
+                          ) /*,
+                          IconButton(
+                            icon: Icon(
+                              Icons.info_outline,
+                              size: shortestSide < 600 ? 25 : 35,
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AboutMaxCount();
+                                  });
+                            },
+                          ),*/
+                          ,
                           SizedBox(
                             width: width * 0.05,
                           ),
@@ -306,44 +259,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       SizedBox(
                         height: height * 0.03,
                       ),
-                      AutoSizeText(
-                        "Remaining Lives",
-                        style: GoogleFonts.vt323(
-                            textStyle: TextStyle(
-                                fontSize: shortestSide < 600 ? 25 : 35,
-                                fontWeight: FontWeight.bold)),
-                        maxLines: 1,
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      _initialNumber != "" && _numLives < 3
-                          ? AutoSizeText(
-                              _regenerate == -1
-                                  ? "Guess -- more correctly to regenerate "
-                                  : "Guess $_regenerate more correctly to regenerate",
-                              style: GoogleFonts.vt323(
-                                  textStyle: TextStyle(
-                                      fontSize: shortestSide < 600 ? 17 : 24,
-                                      fontWeight: FontWeight.normal)),
-                              maxLines: 1,
-                            )
-                          : AutoSizeText(
-                              "Guess -- more correctly to regenerate ",
-                              style: GoogleFonts.vt323(
-                                  textStyle: TextStyle(
-                                      fontSize: 17,
-                                      color: Colors.transparent,
-                                      fontWeight: FontWeight.bold)),
-                              maxLines: 1,
-                            ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: _generateLives(shortestSide),
+                      Lives(
+                        callback: (nume) {
+                          _numLives = nume;
+                        },
                       ),
                       SizedBox(
                         height: height * 0.03,
@@ -375,47 +294,23 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     CountDown(
-                                        maxPeticions: _maxPeticions,
-                                        numPeticions: _peticionsMin,
-                                        callback: () {
-                                          _peticionsMin = _maxPeticions;
-                                          setState(() {});
+                                        number: number,
+                                        callback: (maxPeticions) {
+                                          number.value = maxPeticions;
                                         })
                                   ],
                                 ),
                               ),
                               Expanded(
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      AutoSizeText(
-                                        _initialNumber.isEmpty
-                                            ? "--"
-                                            : _initialNumber,
-                                        style: GoogleFonts.vt323(
-                                            textStyle: TextStyle(
-                                                fontSize: shortestSide < 600
-                                                    ? 60
-                                                    : 70,
-                                                fontWeight: FontWeight.bold)),
-                                        maxLines: 1,
-                                      ),
-                                      AutoSizeText(
-                                        _maxNumber.isEmpty
-                                            ? "Max Reached: --"
-                                            : "Max Reached: $_maxNumber",
-                                        style: GoogleFonts.vt323(
-                                            textStyle: TextStyle(
-                                                fontSize: shortestSide < 600
-                                                    ? 17
-                                                    : 30,
-                                                fontWeight: FontWeight.bold)),
-                                        maxLines: 1,
-                                      )
-                                    ],
-                                  ),
-                                ),
+                                child: CurrentNumber(onReset: () {
+                                  _playReset();
+                                }, onChange:
+                                    (initial, requiredNum, max, nextMax) {
+                                  _initialNumber = initial;
+                                  _requiredNextNumber = requiredNum;
+                                  _maxNumber = max;
+                                  _nextMaxNumber = nextMax;
+                                }),
                               ),
                               SizedBox(
                                 height: shortestSide < 600 ? 25 : 40,
@@ -550,15 +445,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         } else {
           double current = 0;
           double input = 0;
+          String inputControllerText = _inputController.text;
+          _inputController.clear();
           if (_initialNumber.length > 6) {
             var remot = _initialNumber.substring(_initialNumber.length - 3);
-            var local = _inputController.text
-                .substring(_inputController.text.length - 3);
+            var local =
+                inputControllerText.substring(inputControllerText.length - 3);
             current = double.parse(remot);
             input = double.parse(local);
           } else {
             current = double.parse(_initialNumber);
-            input = double.parse(_inputController.text);
+            input = double.parse(inputControllerText);
           }
 
           if (current > input + 10 || current < input - 10) {
@@ -566,9 +463,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 "Come on... that's obviously not the next number");
             _playError();
           } else {
-            if (_peticionsMin > 0) {
-              _peticionsMin--;
-              if (_inputController.text != _requiredNextNumber) {
+            if (number.value > 0) {
+              number.value--;
+              if (inputControllerText != _requiredNextNumber) {
                 _activateCooldown();
                 if (_numLives == 1) {
                   _playReset();
@@ -589,11 +486,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   _playErrorNumber();
                 }
               } else {
-                if (_peticionsMin < 4 && _peticionsMin > 0) {
+                if (number.value < 4 && number.value > 0) {
                   Future.microtask(() {
-                    _countDownToast("$_peticionsMin remaining...");
+                    _countDownToast("${number.value} remaining...");
                   });
-                } else if (_peticionsMin == 0) {
+                } else if (number.value == 0) {
                   Future.microtask(() {
                     _countDownToast("Please wait for your petitions to reset");
                   });
@@ -631,8 +528,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             }
           }
         }
-
-        _inputController.clear();
       }
     } else {
       _displayToastError("Please connect to the internet");
@@ -736,51 +631,5 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       },
       reverseCurve: Curves.linear,
     );
-  }
-
-  List<Widget> _addRegenerate() {
-    List<Widget> regenerate = [];
-    regenerate.add(SizedBox(
-      height: 5,
-    ));
-    regenerate.add(AutoSizeText(
-      _regenerate == -1
-          ? "Guess -- more correctly to regenerate "
-          : "Guess $_regenerate more correctly to regenerate",
-      style: GoogleFonts.vt323(
-          textStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-      maxLines: 1,
-    ));
-    regenerate.add(
-      SizedBox(
-        height: 5,
-      ),
-    );
-    return regenerate;
-  }
-
-  List<Widget> _generateLives(shortestSide) {
-    List<Widget> hearts = [];
-    for (var i = 0; i < _numLives; i++) {
-      hearts.add(Container(
-        height: shortestSide < 600 ? 50 : 70,
-        width: shortestSide < 600 ? 50 : 70,
-        child: Image.asset(
-          'assets/heart.png',
-          fit: BoxFit.contain,
-        ),
-      ));
-    }
-    for (var i = _numLives; i < 3; i++) {
-      hearts.add(Container(
-        height: shortestSide < 600 ? 50 : 70,
-        width: shortestSide < 600 ? 50 : 70,
-        child: Image.asset(
-          'assets/heart_gone.png',
-          fit: BoxFit.contain,
-        ),
-      ));
-    }
-    return hearts;
   }
 }
