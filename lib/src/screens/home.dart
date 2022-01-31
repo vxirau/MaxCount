@@ -220,6 +220,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     myBanner.load();
 
+    SharedPreferences.getInstance().then((value) {
+      if (value.getBool("isLive") == false) {
+        Future.microtask(() {
+          _database.ref("maxCount/").update({
+            "liveUsers": ServerValue.increment(1),
+          });
+          value.setBool("isLive", true);
+        });
+      }
+    });
+
     return GestureDetector(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
@@ -306,7 +317,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       SizedBox(
                         height: 5,
                       ),
-                      _numLives < 3
+                      _initialNumber != "" && _numLives < 3
                           ? AutoSizeText(
                               _regenerate == -1
                                   ? "Guess -- more correctly to regenerate "
