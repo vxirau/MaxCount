@@ -3,7 +3,6 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../screens.dart';
 
@@ -95,7 +94,7 @@ class _AboutMaxCountState extends State<AboutMaxCount> {
                     ),
                     onPressed: () async {
                       const url = "https://victorxirau.tech";
-                      if (!await launch(url)) ;
+                      //if (!await launch(url)) ;
                     },
                     child: AutoSizeText(
                       'Visit Website',
