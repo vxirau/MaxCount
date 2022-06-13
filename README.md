@@ -1,3 +1,3 @@
-# max_count
+# MaxCount
 
-A flutter game
+Flutter Game | Compete with other players to count as high as possible.
