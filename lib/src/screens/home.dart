@@ -14,7 +14,6 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:max_count/src/screens/dialogs/about.dart';
 import 'package:max_count/src/widgets/countdown.dart';
 import 'package:max_count/src/widgets/current_number.dart';
 import 'package:max_count/src/widgets/live_users.dart';
@@ -71,21 +70,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     wantsAudio = widget.initialSounds;
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     player.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached ||
-        state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached || state == AppLifecycleState.inactive) {
       SharedPreferences.getInstance().then((value) {
         if (value.getBool("isLive") == true) {
           Future.microtask(() {
@@ -134,8 +131,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     double width = MediaQuery.of(context).size.width;
     double shortestSide = MediaQuery.of(context).size.shortestSide;
 
-    if (Provider.of<InternetConnectionStatus>(context) ==
-        InternetConnectionStatus.disconnected) {
+    if (Provider.of<InternetConnectionStatus>(context) == InternetConnectionStatus.disconnected) {
       return NoInternet();
     }
 
@@ -192,51 +188,44 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               height: height,
               width: width,
               child: Center(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 8.0, right: 8.0),
+                    child: AutoSizeText(
+                      "Max Count",
+                      style: TextStyle(fontSize: shortestSide < 600 ? 50 : 80, fontFamily: 'PixelTitle', color: Colors.black),
+                      maxLines: 1,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 7,
+                  ),
+                  Row(
                     children: [
                       SizedBox(
-                        height: 10,
+                        width: width * 0.05,
                       ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                        child: AutoSizeText(
-                          "Max Count",
-                          style: TextStyle(
-                              fontSize: shortestSide < 600 ? 50 : 80,
-                              fontFamily: 'PixelTitle',
-                              color: Colors.black),
-                          maxLines: 1,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 7,
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: width * 0.05,
-                          ),
-                          LiveUsers(),
-                          Expanded(child: Container()),
-                          IconButton(
-                            icon: wantsAudio
-                                ? Icon(
-                                    Icons.volume_up,
-                                    size: shortestSide < 600 ? 25 : 35,
-                                  )
-                                : Icon(Icons.volume_off_outlined,
-                                    size: shortestSide < 600 ? 25 : 35),
-                            onPressed: () {
-                              setState(() {
-                                wantsAudio = !wantsAudio;
-                                SharedPreferences.getInstance().then((value) {
-                                  value.setBool("wantsSounds", wantsAudio);
-                                });
-                              });
-                            },
-                          ) /*,
+                      LiveUsers(),
+                      Expanded(child: Container()),
+                      IconButton(
+                        icon: wantsAudio
+                            ? Icon(
+                                Icons.volume_up,
+                                size: shortestSide < 600 ? 25 : 35,
+                              )
+                            : Icon(Icons.volume_off_outlined, size: shortestSide < 600 ? 25 : 35),
+                        onPressed: () {
+                          setState(() {
+                            wantsAudio = !wantsAudio;
+                            SharedPreferences.getInstance().then((value) {
+                              value.setBool("wantsSounds", wantsAudio);
+                            });
+                          });
+                        },
+                      ) /*,
                           IconButton(
                             icon: Icon(
                               Icons.info_outline,
@@ -250,167 +239,148 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                   });
                             },
                           ),*/
-                          ,
-                          SizedBox(
-                            width: width * 0.05,
-                          ),
-                        ],
-                      ),
+                      ,
                       SizedBox(
-                        height: height * 0.03,
+                        width: width * 0.05,
                       ),
-                      Lives(
-                        callback: (nume) {
-                          _numLives = nume;
-                        },
+                    ],
+                  ),
+                  SizedBox(
+                    height: height * 0.03,
+                  ),
+                  Lives(
+                    callback: (nume) {
+                      _numLives = nume;
+                    },
+                  ),
+                  SizedBox(
+                    height: height * 0.03,
+                  ),
+                  Container(
+                    width: width * 0.65,
+                    height: shortestSide < 600 ? width * 0.35 : width * 0.25,
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white, boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        spreadRadius: 3,
+                        blurRadius: 7,
+                        offset: Offset(0, 0), // changes position of shadow
                       ),
-                      SizedBox(
-                        height: height * 0.03,
-                      ),
-                      Container(
-                        width: width * 0.65,
-                        height:
-                            shortestSide < 600 ? width * 0.35 : width * 0.25,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
-                                spreadRadius: 3,
-                                blurRadius: 7,
-                                offset:
-                                    Offset(0, 0), // changes position of shadow
-                              ),
-                            ]),
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 5, right: 5),
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(top: 5.0, left: 5),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    CountDown(
-                                        number: number,
-                                        callback: (maxPeticions) {
-                                          number.value = maxPeticions;
-                                        })
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: CurrentNumber(onReset: () {
-                                  _playReset();
-                                }, onChange:
-                                    (initial, requiredNum, max, nextMax) {
-                                  _initialNumber = initial;
-                                  _requiredNextNumber = requiredNum;
-                                  _maxNumber = max;
-                                  _nextMaxNumber = nextMax;
-                                }),
-                              ),
-                              SizedBox(
-                                height: shortestSide < 600 ? 25 : 40,
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: isCoolingDown ? height * 0.02 : height * 0.04,
-                      ),
-                      isCoolingDown
-                          ? Text(
-                              "Wait $remaining seconds before trying again...",
-                              style: GoogleFonts.vt323(
-                                  textStyle: TextStyle(
-                                      fontSize: shortestSide < 600 ? 16 : 23,
-                                      fontWeight: FontWeight.bold)))
-                          : Container(),
-                      SizedBox(
-                        height: isCoolingDown ? 5 : 0,
-                      ),
-                      isCoolingDown
-                          ? Padding(
-                              padding: EdgeInsets.only(
-                                  left: width * 0.2, right: width * 0.2),
-                              child: LinearProgressIndicator(
-                                value: value,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    HexColor.fromHex("#fe0100")),
-                                backgroundColor: Colors.white,
-                              ),
-                            )
-                          : Container(),
-                      SizedBox(
-                        height: height * 0.01,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                    ]),
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 5, right: 5),
+                      child: Column(
                         children: [
-                          Container(
-                            width: width * 0.5,
-                            height: 50,
-                            child: TextField(
-                              expands: false,
-                              controller: _inputController,
-                              keyboardType: TextInputType.number,
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
+                          Padding(
+                            padding: EdgeInsets.only(top: 5.0, left: 5),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CountDown(
+                                    number: number,
+                                    callback: (maxPeticions) {
+                                      number.value = maxPeticions;
+                                    })
                               ],
-                              decoration: InputDecoration(
-                                  isDense: true,
-                                  hintText: 'Enter new value',
-                                  fillColor: Colors.white,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 3, color: Colors.black),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(15),
-                                      bottomLeft: Radius.circular(15),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 3, color: Colors.black),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(15),
-                                      bottomLeft: Radius.circular(15),
-                                    ),
-                                  ),
-                                  filled: true),
                             ),
                           ),
-                          ElevatedButton(
-                              onPressed: () {
-                                _submitAction(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  primary: HexColor.fromHex("#fe0100"),
-                                  side: BorderSide(
-                                      width: 3.0, color: Colors.black),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.only(
-                                    topRight: Radius.circular(15),
-                                    bottomRight: Radius.circular(15),
-                                  )),
-                                  minimumSize: Size(30, 50)),
-                              child: Icon(Icons.check)),
+                          Expanded(
+                            child: CurrentNumber(onReset: () {
+                              _playReset();
+                            }, onChange: (initial, requiredNum, max, nextMax) {
+                              _initialNumber = initial;
+                              _requiredNextNumber = requiredNum;
+                              _maxNumber = max;
+                              _nextMaxNumber = nextMax;
+                            }),
+                          ),
+                          SizedBox(
+                            height: shortestSide < 600 ? 25 : 40,
+                          )
                         ],
                       ),
-                      Expanded(child: Container()),
+                    ),
+                  ),
+                  SizedBox(
+                    height: isCoolingDown ? height * 0.02 : height * 0.04,
+                  ),
+                  isCoolingDown ? Text("Wait $remaining seconds before trying again...", style: GoogleFonts.vt323(textStyle: TextStyle(fontSize: shortestSide < 600 ? 16 : 23, fontWeight: FontWeight.bold))) : Container(),
+                  SizedBox(
+                    height: isCoolingDown ? 5 : 0,
+                  ),
+                  isCoolingDown
+                      ? Padding(
+                          padding: EdgeInsets.only(left: width * 0.2, right: width * 0.2),
+                          child: LinearProgressIndicator(
+                            value: value,
+                            valueColor: AlwaysStoppedAnimation<Color>(HexColor.fromHex("#fe0100")),
+                            backgroundColor: Colors.white,
+                          ),
+                        )
+                      : Container(),
+                  SizedBox(
+                    height: height * 0.01,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
                       Container(
-                        child: Center(child: AdWidget(ad: myBanner)),
-                        width: width,
-                        height: 100,
-                      )
-                    ]),
+                        width: width * 0.5,
+                        height: 50,
+                        child: TextField(
+                          expands: false,
+                          controller: _inputController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Enter new value',
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(width: 3, color: Colors.black),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  bottomLeft: Radius.circular(15),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(width: 3, color: Colors.black),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  bottomLeft: Radius.circular(15),
+                                ),
+                              ),
+                              filled: true),
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            _submitAction(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                              primary: HexColor.fromHex("#fe0100"),
+                              side: BorderSide(width: 3.0, color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(15),
+                                bottomRight: Radius.circular(15),
+                              )),
+                              minimumSize: Size(30, 50)),
+                          child: Icon(Icons.check)),
+                    ],
+                  ),
+                  Expanded(child: Container()),
+                  Container(
+                    child: Center(child: AdWidget(ad: myBanner)),
+                    width: width,
+                    height: 100,
+                  )
+                ]),
               ),
             ),
           ),
@@ -418,8 +388,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _submitAction(contexte) async {
-    if (Provider.of<InternetConnectionStatus>(contexte, listen: false) ==
-        InternetConnectionStatus.connected) {
+    if (Provider.of<InternetConnectionStatus>(contexte, listen: false) == InternetConnectionStatus.connected) {
       if (_inputController.text.isEmpty) {
         _displayToastError("Please add a number before submiting");
         _playError();
@@ -449,8 +418,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           _inputController.clear();
           if (_initialNumber.length > 6) {
             var remot = _initialNumber.substring(_initialNumber.length - 3);
-            var local =
-                inputControllerText.substring(inputControllerText.length - 3);
+            var local = inputControllerText.substring(inputControllerText.length - 3);
             current = double.parse(remot);
             input = double.parse(local);
           } else {
@@ -459,8 +427,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           }
 
           if (current > input + 10 || current < input - 10) {
-            _displayToastError(
-                "Come on... that's obviously not the next number");
+            _displayToastError("Come on... that's obviously not the next number");
             _playError();
           } else {
             if (number.value > 0) {
@@ -477,8 +444,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         "totalResets": ServerValue.increment(1),
                       })
                       .then((value) {})
-                      .catchError((error) =>
-                          _displayToastError("We encountered a network error"));
+                      .catchError((error) => _displayToastError("We encountered a network error"));
                 } else {
                   await _database.ref("maxCount/").update({
                     "lives": ServerValue.increment(-1),
@@ -497,22 +463,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 }
                 if (_maxNumber == _initialNumber) {
                   if (_numLives == 3) {
-                    await _database.ref("maxCount/").update({
-                      "number": _requiredNextNumber,
-                      "maxNumber": _nextMaxNumber
-                    });
+                    await _database.ref("maxCount/").update({"number": _requiredNextNumber, "maxNumber": _nextMaxNumber});
                   } else {
-                    await _database.ref("maxCount/").update({
-                      "number": _requiredNextNumber,
-                      "lifeReset": ServerValue.increment(-1),
-                      "maxNumber": _nextMaxNumber
-                    });
+                    await _database.ref("maxCount/").update({"number": _requiredNextNumber, "lifeReset": ServerValue.increment(-1), "maxNumber": _nextMaxNumber});
                   }
                 } else {
                   if (_numLives == 3) {
-                    await _database
-                        .ref("maxCount/")
-                        .update({"number": _requiredNextNumber});
+                    await _database.ref("maxCount/").update({"number": _requiredNextNumber});
                   } else {
                     await _database.ref("maxCount/").update({
                       "number": _requiredNextNumber,

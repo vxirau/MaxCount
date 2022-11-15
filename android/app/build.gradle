@@ -50,8 +50,8 @@ android {
 
     defaultConfig {
         applicationId "com.projectk.vxgamez.maxcount"
-        minSdkVersion 23
-        targetSdkVersion 30
+        minSdkVersion 31
+        targetSdkVersion 31
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
